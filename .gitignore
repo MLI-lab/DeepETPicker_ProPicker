@@ -2,3 +2,4 @@
 *.git
 *.idea
 bin/*.sh
+**__pycache__**

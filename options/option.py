@@ -15,7 +15,12 @@ def str2bool(v):
 class BaseOptions():
     def __init__(self):
         self.parser = argparse.ArgumentParser(description='Parameters for 3D particle picking')
-
+        
+        # propicker-specific parameters
+        self.parser.add_argument('--propicker_model_file', type=str, default='None', help="Path to prompts file; only used when model is 'ProPicker'")
+        self.parser.add_argument('--prompt_embed_file', type=str, default='None', help="Path to prompts file; only used when model is 'ProPicker'")
+        self.parser.add_argument('--prompt_class', type=str, default='None', help="Selects class from keys of 'prompt_embed_file'")
+        
         # dataloader parameters
         self.parser.add_argument('--block_size', help='block size', type=int, default=72)
         self.parser.add_argument('--val_block_size', help='block size', type=int, default=0)
@@ -98,6 +103,7 @@ class BaseOptions():
         self.parser.add_argument('--batch_size', help='batch size', type=int, default=32)
         self.parser.add_argument('--val_batch_size', help='batch size', type=int, default=0)
         self.parser.add_argument('--max_epoch', help='number of epochs', type=int, default=100)
+        self.parser.add_argument("--check_val_every_n_epoch", type=int, default=1)
         self.parser.add_argument('--loss_func_seg', help='seg loss function type', type=str, default='Dice')
         self.parser.add_argument('--loss_func_dn', help='denoising loss function type', type=str, default='MSE')
         self.parser.add_argument('--loss_func_paf', help='paf loss function type', type=str, default='MSE')

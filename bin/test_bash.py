@@ -2,6 +2,7 @@ import json
 import sys
 import os
 import importlib
+import torch
 from os.path import dirname, abspath
 import numpy as np
 DeepETPickerHome = dirname(abspath(__file__))
@@ -26,7 +27,7 @@ if __name__ == '__main__':
     args.test_use_pad = True
     args.use_seg = True
     args.meanPool_NMS = True
-    args.f_maps = [24, 48, 72, 108]
+    #args.f_maps = [24, 48, 72, 108]
     args.num_classes = cfg['num_cls']
     train_cls_num = cfg['num_cls']
     if args.num_classes == 1:
@@ -47,7 +48,7 @@ if __name__ == '__main__':
     args.gpu_id = [int(i) for i in cfg['gpu_ids'].split(',')]
     args.test_mode = 'test_only'
     args.out_name = 'PredictedLabels'
-    args.de_duplication = True
+    #args.de_duplication = True
     args.de_dup_fmt = 'fmt4'
     args.mini_dist = sorted([int(i) // 2 + 1 for i in cfg['ocp_diameter'].split(',')])[0]
     args.data_split = [0, 1, 0, 1, 0, 1]
@@ -65,14 +66,21 @@ if __name__ == '__main__':
                fmt='%s',
                newline='\n')
 
-    # tomo_list = [i for i in os.listdir(cfg[f"{cfg['base_path']}/data_std"]) if cfg['tomo_format'] in i]
-    tomo_list = np.loadtxt(f"{cfg['base_path']}/data_std/num_name.csv",
-                           delimiter='\t',
-                           dtype=str)
+    tomo_list = [i for i in os.listdir(f"{cfg['base_path']}/data_std") if cfg['tomo_format'] in i]
+    if len(tomo_list) == 0:
+        tomo_list = np.loadtxt(f"{cfg['base_path']}/data_std/num_name.csv",
+                            delimiter='\t',
+                            dtype=str)
     args.test_idxs = np.arange(len(tomo_list))
+    
 
     for k, v in sorted(vars(args).items()):
         print(k, '=', v)
 
-    # Testing
-    test.test_func(args, stdout=None)
+    for id in  np.arange(len(tomo_list)):
+        torch.cuda.empty_cache()
+        args.test_idxs = [id]
+        # Testing
+        test = None
+        test = importlib.import_module(".test", package=os.path.split(DeepETPickerHome)[1])
+        test.test_func(args, stdout=None)

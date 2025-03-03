@@ -243,7 +243,7 @@ class Dataset_ClsBased(data.Dataset):
             self.label = [
                 mrcfile.open(os.path.join(label_path, dir_names[idx] + tomo_format)) for idx
                 in self.data_range]
-
+        
         # load paf
         if self.use_paf:
             paf_path = cfg["paf_path"]
@@ -424,6 +424,7 @@ class Dataset_ClsBased(data.Dataset):
 
             point = self.__sample(np.array([x, y, z]),
                                   np.array([x_max, y_max, z_max]))
+
 
             if self.args.input_cat:
                 img = self.origin[:, point[2] - self.shift:point[2] + self.shift,

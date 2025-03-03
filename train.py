@@ -14,7 +14,7 @@ from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 from utils.loss import DiceLoss
 from utils.metrics import seg_metrics
 from utils.colors import COLORS
-from model.model_loader import get_model
+from model_.model_loader import get_model
 from utils.misc import combine, cal_metrics_NMS_OneCls, get_centroids, cal_metrics_MultiCls, combine_torch
 from sklearn.metrics import precision_recall_fscore_support
 import time
@@ -56,6 +56,15 @@ class UNetExperiment(pl.LightningModule):
 
         if args.loss_func_seg == 'Dice':
             self.loss_function_seg = DiceLoss(args=args)
+        elif args.loss_func_seg == 'CE':
+            if args.num_classes == 1:
+                self.loss_function_seg = nn.BCELoss()
+            elif args.num_classes > 1:
+                self.loss_function_seg = nn.CrossEntropyLoss()
+        
+        if args.network == "ProPicker" and args.loss_func_seg != 'CE':
+            print(f"WARNING: We recommend to fine-tune ProPicker with CE loss, but you are using {args.loss_func_seg} loss!")
+
 
         if 'gaussian' in self.val_cfg["label_type"]:
             self.thresholds = np.linspace(0.15, 0.45, 7)
@@ -312,6 +321,24 @@ class UNetExperiment(pl.LightningModule):
                 "interval": "epoch",
                 "frequency": 1
             }
+        elif args.scheduler == 'ReduceLROnPlateau':
+            sched = torch.optim.lr_scheduler.ReduceLROnPlateau(
+                optimizer,
+                mode="min",
+                factor=0.5,
+                patience=3,
+                threshold_mode="rel",
+                cooldown=0,
+                min_lr=1e-6,
+                verbose=True,
+                #monitor="val_loss",
+            )
+            lr_dict = {
+                "scheduler": sched,
+                "interval": "epoch",
+                "monitor": "val_loss",
+                "frequency": args.check_val_every_n_epoch
+            }
 
         if args.scheduler is None:
             return [optimizer]
@@ -349,8 +376,9 @@ def train_func(args, stdout=None):
                                           name=logger_name)
     lr_monitor = LearningRateMonitor(logging_interval='step')
 
-    runner = Trainer(min_epochs=min(50, args.max_epoch),
+    runner = Trainer(min_epochs=args.max_epoch,
                      max_epochs=args.max_epoch,
+                     check_val_every_n_epoch=args.check_val_every_n_epoch,
                      logger=tb_logger,
                      gpus=args.gpu_id,
                      checkpoint_callback=checkpoint_callback,
@@ -359,25 +387,17 @@ def train_func(args, stdout=None):
                      precision=32,
                      profiler=True,
                      sync_batchnorm=True,
-                     resume_from_checkpoint=args.checkpoints)
+                     resume_from_checkpoint=args.checkpoints
+    )
 
 
-    try:
-        runner.fit(model)
-        print('*' * 100)
-        print('Training Finished')
-        print(f'Training pid:{os.getpid()}')
-        print('*' * 100)
-        torch.cuda.empty_cache()
-        if stdout is not None:
-            sys.stderr = save_stderr
-            sys.stdout = save_stdout
-        return os.getpid()
-    except:
-        torch.cuda.empty_cache()
-        if stdout is not None:
-            stdout.flush()
-            stdout.write('Training Exception!')
-            sys.stderr = save_stderr
-            sys.stdout = save_stdout
-        return os.getpid()
+    runner.fit(model)
+    print('*' * 100)
+    print('Training Finished')
+    print(f'Training pid:{os.getpid()}')
+    print('*' * 100)
+    torch.cuda.empty_cache()
+    if stdout is not None:
+        sys.stderr = save_stderr
+        sys.stdout = save_stdout
+    return os.getpid()
