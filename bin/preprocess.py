@@ -22,13 +22,18 @@ if __name__ == "__main__":
      
     if "skip_coords" not in pre_config.keys():
         pre_config["skip_coords"] = False
+    else:
+        pre_config["skip_coords"] = bool(pre_config["skip_coords"])
 
     if "skip_labels" not in pre_config.keys():
         pre_config["skip_labels"] = False
+    else:
+        pre_config["skip_labels"] = bool(pre_config["skip_labels"])
 
     if "skip_ocp" not in pre_config.keys():
         pre_config["skip_ocp"] = False
-
+    else:
+        pre_config["skip_ocp"] = bool(pre_config["skip_ocp"])
 
     # initial coords
     if not pre_config["skip_coords"]: 
