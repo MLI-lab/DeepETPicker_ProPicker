@@ -89,9 +89,9 @@ def test_func(args, stdout=None):
                         
                         index = torch.cat([i[1][0] for i in epoch_output], dim=0)
                         seg_output = torch.cat([i[1][1] for i in epoch_output], dim=0)
-                        # get parent of out_dir
-                        parent_dir = '/'.join(out_dir.split('/')[:-2])
-                        out_dir_tomo = f"{parent_dir}/full_segmentation_output"
+                        # version_X directory 
+                        versino_dir = '/'.join(out_dir.split('/')[:-1])
+                        out_dir_tomo = f"{versino_dir}/full_segmentation_output"
                         os.makedirs(out_dir_tomo, exist_ok=True)
                         full_tomogram = self._reassemble(seg_output, index)
                         torch.save(full_tomogram, os.path.join(out_dir_tomo, f'{dir_name}.pt'))
