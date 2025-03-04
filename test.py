@@ -224,7 +224,6 @@ def test_func(args, stdout=None):
                         seg_output_crop = torch.stack([seg_output[..., pad_size:-pad_size, pad_size:-pad_size, pad_size:-pad_size] for seg_output in seg_output.squeeze()])
                         index = index.cpu()
 
-
                         top_left = index - (block_size // 2) - pad_size
                         full_z, full_y, full_x = torch.max(top_left + block_size, dim=0).values
                         
@@ -249,12 +248,12 @@ def test_func(args, stdout=None):
                             y_end = y_start + block_size - 2*pad_size
                             x_end = x_start + block_size - 2*pad_size
                             
-                            # Add sub-tomogram data
+                            # insert sub-tomogram data
                             seg_output_crop = seg_output.squeeze()[i, ..., pad_size:-pad_size, pad_size:-pad_size, pad_size:-pad_size]
                             full_tomogram[..., z_start:z_end, y_start:y_end, x_start:x_end] += seg_output_crop
                             count_matrix[..., z_start:z_end, y_start:y_end, x_start:x_end] += 1
 
-                        # Average overlapping regions
+                        # average overlapping regions
                         count_matrix[count_matrix == 0] = 1  # Prevent division by zero
                         full_tomogram /= count_matrix
                         return full_tomogram
@@ -263,7 +262,7 @@ def test_func(args, stdout=None):
                 # try:
                 #     model = UNetTest.load_from_checkpoint(args.checkpoints)
                 # except:
-                print('Loading model from checkpoint failed. Trying to load model alternatively.')
+                #  print('Loading model from checkpoint failed. Trying to load model alternatively.')
                 model = UNetTest()
                 state_dict = torch.load(args.checkpoints)['state_dict']
                 state_dict_ = {k: v for k, v in zip(model.model.state_dict().keys(), state_dict.values())}
