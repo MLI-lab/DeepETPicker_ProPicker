@@ -2,7 +2,17 @@ import importlib.util
 import torch
 import json
 import pytorch_lightning as pl
-from propicker.model.promptable_picker import ProPicker
+  
+def import_class_from_path(class_name, file_path):
+    """
+    Import a class from a file path by dynamically changing sys.path
+    """
+    spec = importlib.util.spec_from_file_location(class_name, file_path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    # get the class from the module
+    cls = getattr(module, class_name)
+    return cls
 
 
 class ConditionedProPicker(pl.LightningModule):
@@ -26,9 +36,14 @@ class ConditionedProPicker(pl.LightningModule):
         return model_output
     
 
-def load_conditioned_propicker(args):
-    # load ProPicker model class from packaged propicker
-    ppicker = ProPicker.load_from_checkpoint(args.propicker_model_file)
+def load_conditioned_propicker(args):    
+    # load ProPicker model class
+    propicker_base_dir = __file__.split("/DeepETPicker_ProPicker/")[0]
+    ModelClass = import_class_from_path(
+        class_name="ProPicker",
+        file_path=f"{propicker_base_dir}/model/promptable_picker.py"
+    )
+    ppicker = ModelClass.load_from_checkpoint(args.propicker_model_file)
     
     # load prompts
     prompts = json.load(open(args.prompt_embed_file, "r"))
